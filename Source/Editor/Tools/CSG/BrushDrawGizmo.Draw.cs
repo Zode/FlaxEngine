@@ -93,7 +93,7 @@ namespace FlaxEditor.Tools.CSG
 
 			if(!GizmoMode.Dragging)
 			{
-				Matrix.RotationX(Mathr.Pi, out Matrix m2);
+				Matrix.RotationX(Mathf.Pi, out Matrix m2);
 				Matrix.Multiply(ref m2, ref m1, out m3);
 				transAxisMesh.Draw(ref renderContext,
 					GizmoMode.CurrentDragDirection == BrushDrawGizmoMode.DragDirection.Forward ? _materialAxisFocus : _materialAxisForwards,
@@ -111,7 +111,7 @@ namespace FlaxEditor.Tools.CSG
 			switch(GizmoMode.CurrentDragDirection)
 			{
 				case BrushDrawGizmoMode.DragDirection.Forward:
-					Matrix.RotationX(Mathr.Pi, out Matrix m2);
+					Matrix.RotationX(Mathf.Pi, out Matrix m2);
 					Matrix.Multiply(ref m2, ref m1, out m3);
 					transAxisMesh.Draw(ref renderContext, _materialAxisFocus, ref m3);
 					break;

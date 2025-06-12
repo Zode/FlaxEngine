@@ -124,7 +124,7 @@ namespace FlaxEditor.Tools.CSG
 			var flags = SceneGraphNode.RayCastData.FlagTypes.SkipEditorPrimitives 
 						| SceneGraphNode.RayCastData.FlagTypes.SkipTriggers 
 						| SceneGraphNode.RayCastData.FlagTypes.SkipColliders;
-			var hit = Editor.Instance.Scene.Root.RayCast(ref ray, ref view, out float closest, out Vector3 normal, flags);
+			var hit = Editor.Instance.Scene.Root.RayCast(ref ray, ref view, out Real closest, out Vector3 normal, flags);
 
 			if(!GizmoMode.Dragging)
 			{

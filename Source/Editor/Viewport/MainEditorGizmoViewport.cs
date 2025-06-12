@@ -178,6 +178,12 @@ namespace FlaxEditor.Viewport
         public Tools.Foliage.EditFoliageGizmoMode EditFoliageGizmo;
 
         /// <summary>
+        /// The CSG brush drawing gizmo.
+        /// </summary>
+        public Tools.CSG.BrushDrawGizmoMode BrushDrawGizmo;
+
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="MainEditorGizmoViewport"/> class.
         /// </summary>
         /// <param name="editor">Editor instance.</param>
@@ -249,6 +255,7 @@ namespace FlaxEditor.Viewport
                 Gizmos.AddMode(EditTerrainGizmo = new Tools.Terrain.EditTerrainGizmoMode());
                 Gizmos.AddMode(PaintFoliageGizmo = new Tools.Foliage.PaintFoliageGizmoMode());
                 Gizmos.AddMode(EditFoliageGizmo = new Tools.Foliage.EditFoliageGizmoMode());
+                Gizmos.AddMode(BrushDrawGizmo = new Tools.CSG.BrushDrawGizmoMode());
 
                 // Activate transform mode first
                 Gizmos.SetActiveMode<TransformGizmoMode>();

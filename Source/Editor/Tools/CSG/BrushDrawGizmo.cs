@@ -56,6 +56,15 @@ namespace FlaxEditor.Tools.CSG
 			}
 		}
 
+		/// <inheritdoc />
+        public override void OnDeactivated()
+        {
+			GizmoMode.ClearDrag();
+			GizmoMode.ClearHeight();
+			GizmoMode.CurrentDrawStage = BrushDrawGizmoMode.DrawStage.Drag2DShape;
+            base.OnDeactivated();
+        }
+
 		private bool AreAssetsLoaded()
 		{
 			if(_modelTranslationAxis == null || !_modelTranslationAxis.IsLoaded)
@@ -78,8 +87,9 @@ namespace FlaxEditor.Tools.CSG
 
 		private void ConstructCSGBrush()
 		{
+			bool isSubtractive = GizmoMode.CurrentDragDirection == BrushDrawGizmoMode.DragDirection.Backward;
 			//if this was a subtractive brush, fix too great precision by nudging brush "backwards" from draw plane if allowed
-			if(GizmoMode.FixSubtractions && GizmoMode.ExtrusionHeight < 0.0f)
+			if(GizmoMode.FixSubtractions && isSubtractive)
 			{
 				Real fixDistance = 1.0f;
 				GizmoMode.CursorStart += GizmoMode.CursorPlane.Normal * fixDistance;  
@@ -100,7 +110,7 @@ namespace FlaxEditor.Tools.CSG
 						Position = midPoint,
 						Orientation = Quaternion.FromDirection(GizmoMode.CursorPlane.Normal),
 						Size = new Vector3(Mathr.Abs(endPoint.X - startPoint.X), Mathr.Abs(endPoint.Y - startPoint.Y), Mathr.Abs(GizmoMode.ExtrusionHeight)),
-						Mode = GizmoMode.ExtrusionHeight >= 0.0f ? BrushMode.Additive : BrushMode.Subtractive,
+						Mode = isSubtractive ? BrushMode.Subtractive : BrushMode.Additive,
 					};
 
 					Editor.Instance.SceneEditing.Spawn(boxBrush);

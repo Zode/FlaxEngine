@@ -100,7 +100,15 @@ namespace FlaxEditor.Tools.CSG
 			var midPoint = GizmoMode.CursorStart + (GizmoMode.CursorEnd - GizmoMode.CursorStart) * 0.5f;
 			midPoint += GizmoMode.CursorPlane.Normal * GizmoMode.ExtrusionHeight * 0.5f;
 			var startPoint = ProjectPointToPlane2D(GizmoMode.CursorPlane, GizmoMode.CursorStart);
-			var endPoint = ProjectPointToPlane2D(GizmoMode.CursorPlane, GizmoMode.CursorEnd);		
+			var endPoint = ProjectPointToPlane2D(GizmoMode.CursorPlane, GizmoMode.CursorEnd);
+
+			//rotate everything by 90deg so that extrusion (forward) from the cursorplane becomes upward for the final brush
+			var rotation = Quaternion.GetRotationFromTo(Vector3.Up, Vector3.Forward, Vector3.Up);
+			var orientation = Quaternion.FromDirection(GizmoMode.CursorPlane.Normal) * rotation;
+			var size = new Vector3(endPoint.X - startPoint.X, endPoint.Y - startPoint.Y, GizmoMode.ExtrusionHeight) * rotation;
+			size.X = Mathr.Abs(size.X);
+			size.Y = Mathr.Abs(size.Y);
+			size.Z = Mathr.Abs(size.Z);
 
 			switch(GizmoMode.CurrentShape)
 			{
@@ -108,8 +116,8 @@ namespace FlaxEditor.Tools.CSG
 					var boxBrush = new BoxBrush()
 					{
 						Position = midPoint,
-						Orientation = Quaternion.FromDirection(GizmoMode.CursorPlane.Normal),
-						Size = new Vector3(Mathr.Abs(endPoint.X - startPoint.X), Mathr.Abs(endPoint.Y - startPoint.Y), Mathr.Abs(GizmoMode.ExtrusionHeight)),
+						Orientation = orientation,
+						Size = size,
 						Mode = isSubtractive ? BrushMode.Subtractive : BrushMode.Additive,
 					};
 

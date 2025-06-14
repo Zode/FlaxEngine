@@ -78,13 +78,29 @@ namespace FlaxEditor.Tools.CSG
 			/// </summary>
 			None,
 			/// <summary>
-			/// Additive (forward) direction.
+			/// Forward or "Additive" direction.
 			/// </summary>
 			Forward,
 			/// <summary>
-			/// Subtractive (backward) direction.
+			/// Backward or "Subtractive" direction.
 			/// </summary>
 			Backward,
+			/// <summary>
+			/// Rightward direction
+			/// </summary>
+			Rightward,
+			/// <summary>
+			/// Leftward direction
+			/// </summary>
+			Leftward,
+			/// <summary>
+			/// Upward direction
+			/// </summary>
+			Upward,
+			/// <summary>
+			/// Downward direction
+			/// </summary>
+			Downward,
 		}
 
 		/// <summary>

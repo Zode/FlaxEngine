@@ -29,7 +29,7 @@ namespace FlaxEditor.Tools.CSG
 		private void UpdateMatrices()
 		{
 			var origin = GizmoMode.CursorStart + (GizmoMode.CursorEnd - GizmoMode.CursorStart) * 0.5f;
-			origin += GizmoMode.CursorPlane.Normal * GizmoMode.ExtrusionHeight;
+			origin += GizmoMode.CursorPlane.Normal * GizmoMode.ExtrusionHeight * 0.5f;
 			float screenScale = Editor.Instance.Options.Options.Visual.GizmoSize;
 			if (Owner.Viewport.UseOrthographicProjection)
 			{
@@ -99,10 +99,12 @@ namespace FlaxEditor.Tools.CSG
 					break;
 
 				case BrushDrawGizmoMode.DrawStage.FinalizeShape:
-					//for now just clear it straight
-					GizmoMode.ClearDrag();
-					GizmoMode.ClearHeight();
-					GizmoMode.CurrentDrawStage = BrushDrawGizmoMode.DrawStage.Drag2DShape;
+					if(!AreAssetsLoaded())
+					{
+						break;
+					}
+
+					Finalize3DShape();
 					break;
 
 				default:
@@ -112,8 +114,6 @@ namespace FlaxEditor.Tools.CSG
 			if(!GizmoMode.Dragging && !IsDragValid())
 			{
 				GizmoMode.ClearDrag();
-				GizmoMode.ClearHeight();
-				GizmoMode.CurrentDrawStage = BrushDrawGizmoMode.DrawStage.Drag2DShape;
 			}
 		}
 		
@@ -180,7 +180,6 @@ namespace FlaxEditor.Tools.CSG
 
 				GizmoMode.StartDrag();
 				ExtrudeDragHeight();
-				UpdateMatrices();
 				return;
 			}
 
@@ -233,6 +232,16 @@ namespace FlaxEditor.Tools.CSG
 				}
 
 				_lastExtrusionIntersectionPoint = intersectionPoint;
+			}
+		}
+
+		private void Finalize3DShape()
+		{
+			Ray ray = Owner.MouseRay;
+
+			if(Owner.IsLeftMouseButtonDown)
+			{
+				GizmoMode.ClearDrag();
 			}
 		}
 	}

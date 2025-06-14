@@ -14,6 +14,9 @@ namespace FlaxEditor.Tools.CSG
 {
 	public partial class BrushDrawGizmo : GizmoBase
 	{
+		private const float GIZMO_MODELS_SCALE_TO_REAL_GIZMO_SIZE = 0.075f;
+
+
 		/// <inheritdoc />
 		public override void Draw(ref RenderContext renderContext)
 		{
@@ -33,11 +36,19 @@ namespace FlaxEditor.Tools.CSG
 						break;
 					}
 
+					UpdateMatrices();
 					DrawExtrusion(ref renderContext);
 					DrawDrag3D();
 					break;
 
 				case BrushDrawGizmoMode.DrawStage.FinalizeShape:
+					if(!AreAssetsLoaded())
+					{
+						break;
+					}
+
+					UpdateMatrices();
+					DrawFaceControls(ref renderContext);
 					DrawDrag3D();
 					break;
 
@@ -85,42 +96,57 @@ namespace FlaxEditor.Tools.CSG
 		private void DrawExtrusion(ref RenderContext renderContext)
 		{
 			Mesh transAxisMesh = _modelTranslationAxis.LODs[0].Meshes[0];
-			
-			renderContext.View.GetWorldMatrix(ref _gizmoWorld, out Matrix world);
-			const float gizmoModelsScale2RealGizmoSize = 0.075f;
-			Matrix.Scaling(gizmoModelsScale2RealGizmoSize, out Matrix m3);
-			Matrix.Multiply(ref m3, ref world, out Matrix m1);
 
-			if(!GizmoMode.Dragging)
+			DrawMesh(ref renderContext, ref transAxisMesh, ref _materialAxisForwards, BrushDrawGizmoMode.DragDirection.Forward,
+				0.0f, GizmoMode.ExtrusionHeight * 0.5f, 0.0f, Mathf.Pi, 0.0f);
+			DrawMesh(ref renderContext, ref transAxisMesh, ref _materialAxisBackwards, BrushDrawGizmoMode.DragDirection.Backward,
+				0.0f, GizmoMode.ExtrusionHeight * -0.5f, 0.0f, 0.0f, 0.0f);
+		}
+
+		private void DrawFaceControls(ref RenderContext renderContext)
+		{
+			var startPoint = ProjectPointToPlane2D(GizmoMode.CursorPlane, GizmoMode.CursorStart);
+			var endPoint = ProjectPointToPlane2D(GizmoMode.CursorPlane, GizmoMode.CursorEnd);
+			var delta = endPoint - startPoint;
+			delta.X = Mathr.Abs(delta.X);
+			delta.Y = Mathr.Abs(delta.Y);
+
+			Mesh transAxisMesh = _modelTranslationAxis.LODs[0].Meshes[0];
+
+			DrawMesh(ref renderContext, ref transAxisMesh, ref _materialAxisForwards, BrushDrawGizmoMode.DragDirection.Upward,
+				0.0f, Mathr.Abs(GizmoMode.ExtrusionHeight) * 0.5f, 0.0f, Mathf.Pi, 0.0f);
+			DrawMesh(ref renderContext, ref transAxisMesh, ref _materialAxisForwards, BrushDrawGizmoMode.DragDirection.Downward,
+				0.0f, Mathr.Abs(GizmoMode.ExtrusionHeight) * -0.5f, 0.0f, 0.0f, 0.0f);
+
+			DrawMesh(ref renderContext, ref transAxisMesh, ref _materialAxisZ, BrushDrawGizmoMode.DragDirection.Forward,
+				0.0f, 0.0f, delta.Y * -0.5f, Mathf.Pi * 0.5f, 0.0f);
+			DrawMesh(ref renderContext, ref transAxisMesh, ref _materialAxisZ, BrushDrawGizmoMode.DragDirection.Backward,
+				0.0f, 0.0f, delta.Y * 0.5f, Mathf.Pi * -0.5f, 0.0f);
+
+			DrawMesh(ref renderContext, ref transAxisMesh, ref _materialAxisBackwards, BrushDrawGizmoMode.DragDirection.Rightward,
+				delta.X * 0.5f, 0.0f, 0.0f, Mathf.Pi * 0.5f, Mathf.Pi * -0.5f);
+			DrawMesh(ref renderContext, ref transAxisMesh, ref _materialAxisBackwards, BrushDrawGizmoMode.DragDirection.Leftward,
+				delta.X * -0.5f, 0.0f, 0.0f, Mathf.Pi * -0.5f, Mathf.Pi * 0.5f);
+		}
+
+		private void DrawMesh(ref RenderContext renderContext, ref Mesh mesh, ref MaterialInstance material, BrushDrawGizmoMode.DragDirection dragDirection, 
+			Real x, Real y, Real z, float pitch, float yaw)
+		{
+			renderContext.View.GetWorldMatrix(ref _gizmoWorld, out Matrix worldMatrix);
+			Matrix.Scaling(GIZMO_MODELS_SCALE_TO_REAL_GIZMO_SIZE, out Matrix scaleMatrix);
+
+			if(!GizmoMode.Dragging || GizmoMode.CurrentDragDirection == dragDirection)
 			{
-				Matrix.RotationX(Mathf.Pi, out Matrix m2);
-				Matrix.Multiply(ref m2, ref m1, out m3);
-				transAxisMesh.Draw(ref renderContext,
-					GizmoMode.CurrentDragDirection == BrushDrawGizmoMode.DragDirection.Forward ? _materialAxisFocus : _materialAxisForwards,
-					ref m3);
+				Matrix.Translation(x, y, z, out Matrix m1);
+				Matrix.Multiply(ref worldMatrix, ref m1, out m1);
+				Matrix.Multiply(ref scaleMatrix, ref m1, out m1);
+				
+				Matrix.RotationX(pitch, out Matrix m2);
+				Matrix.Multiply(ref m2, ref m1, out m1);
+				Matrix.RotationY(yaw, out m2);
+				Matrix.Multiply(ref m2, ref m1, out m1);
 
-				Matrix.RotationX(0.0f, out m2);
-				Matrix.Multiply(ref m2, ref m1, out m3);
-				transAxisMesh.Draw(ref renderContext,
-					GizmoMode.CurrentDragDirection == BrushDrawGizmoMode.DragDirection.Backward ? _materialAxisFocus : _materialAxisBackwards,
-					ref m3);
-
-				return;
-			}
-
-			switch(GizmoMode.CurrentDragDirection)
-			{
-				case BrushDrawGizmoMode.DragDirection.Forward:
-					Matrix.RotationX(Mathf.Pi, out Matrix m2);
-					Matrix.Multiply(ref m2, ref m1, out m3);
-					transAxisMesh.Draw(ref renderContext, _materialAxisFocus, ref m3);
-					break;
-
-				case BrushDrawGizmoMode.DragDirection.Backward:
-					Matrix.RotationX(0.0f, out m2);
-					Matrix.Multiply(ref m2, ref m1, out m3);
-					transAxisMesh.Draw(ref renderContext, _materialAxisFocus, ref m3);
-					break;
+				mesh.Draw(ref renderContext, GizmoMode.CurrentDragDirection == dragDirection ? _materialAxisFocus : material, ref m1);
 			}
 		}
 

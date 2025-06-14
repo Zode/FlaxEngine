@@ -132,22 +132,26 @@ namespace FlaxEditor.Tools.CSG
 		private void DrawMesh(ref RenderContext renderContext, ref Mesh mesh, ref MaterialInstance material, BrushDrawGizmoMode.DragDirection dragDirection, 
 			Real x, Real y, Real z, float pitch, float yaw)
 		{
+			if(GizmoMode.Dragging && GizmoMode.CurrentDragDirection != dragDirection)
+				return;
+
 			renderContext.View.GetWorldMatrix(ref _gizmoWorld, out Matrix worldMatrix);
 			Matrix.Scaling(GIZMO_MODELS_SCALE_TO_REAL_GIZMO_SIZE, out Matrix scaleMatrix);
 
-			if(!GizmoMode.Dragging || GizmoMode.CurrentDragDirection == dragDirection)
-			{
-				Matrix.Translation(x, y, z, out Matrix m1);
-				Matrix.Multiply(ref worldMatrix, ref m1, out m1);
-				Matrix.Multiply(ref scaleMatrix, ref m1, out m1);
-				
-				Matrix.RotationX(pitch, out Matrix m2);
-				Matrix.Multiply(ref m2, ref m1, out m1);
-				Matrix.RotationY(yaw, out m2);
-				Matrix.Multiply(ref m2, ref m1, out m1);
+			//HACK: there is probably a way to do this with matrix calculations, but this works for now.
+			var rotation = Quaternion.GetRotationFromTo(Vector3.Up, Vector3.Forward, Vector3.Up);
+			var position = new Float3((float)x, (float)y, (float)z) * (_gizmoWorld.Orientation * rotation);
 
-				mesh.Draw(ref renderContext, GizmoMode.CurrentDragDirection == dragDirection ? _materialAxisFocus : material, ref m1);
-			}
+			Matrix.Translation(ref position, out Matrix m1);
+			Matrix.Multiply(ref worldMatrix, ref m1, out m1);
+			Matrix.Multiply(ref scaleMatrix, ref m1, out m1);
+
+			Matrix.RotationX(pitch, out Matrix m2);
+			Matrix.Multiply(ref m2, ref m1, out m1);
+			Matrix.RotationY(yaw, out m2);
+			Matrix.Multiply(ref m2, ref m1, out m1);
+
+			mesh.Draw(ref renderContext, GizmoMode.CurrentDragDirection == dragDirection ? _materialAxisFocus : material, ref m1);
 		}
 
 		private static void DrawRectangleOnPlane(Vector3 position, Vector3 normal, Vector2 extents, Color color)
